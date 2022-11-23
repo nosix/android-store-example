@@ -6,8 +6,14 @@ val Long.kB
 val Long.MB
     get() = this.kB * 1024
 
+val Long.GB
+    get() = this.MB * 1024
+
 val Int.MB
     get() = this.toLong().MB
+
+val Int.GB
+    get() = this.toLong().GB
 
 val Long.withUnit
     get() = ByteSize.from(this)

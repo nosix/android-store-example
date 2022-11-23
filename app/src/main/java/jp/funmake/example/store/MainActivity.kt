@@ -21,12 +21,30 @@ class MainActivity : AppCompatActivity() {
     private val appSpecificInternalStorage = AppSpecificInternalStorage()
     private val appSpecificExternalStorage = AppSpecificExternalStorage()
 
+    /**
+     * アロケートを要求するサイズ
+     * 負値を指定すると強制的にアロケートできない扱いにする。
+     */
+    private val requestAllocateSize = 1.MB
+
+    /**
+     * 容量不足でアロケートできない場合にCLEAR_APP_CACHEを行うか
+     * falseではMANAGE_STORAGEを行う
+     */
+    private val clearCacheWhenNotAllocatable = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            requestSpace(10.MB)
+            requestSpace(requestAllocateSize) {
+                if (clearCacheWhenNotAllocatable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    startActivity(Intent(StorageManager.ACTION_CLEAR_APP_CACHE))
+                } else {
+                    startActivity(Intent(StorageManager.ACTION_MANAGE_STORAGE))
+                }
+            }
         }
 
         findViewById<Button>(R.id.deleteButton).setOnClickListener {
@@ -51,16 +69,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(26)
-    private fun requestSpace(bytes: Long) {
+    private fun requestSpace(bytes: Long, whenNotAllocatable: () -> Unit) {
         val storageManager = checkNotNull(getSystemService<StorageManager>())
         val uuid = storageManager.getUuidForPath(filesDir)
         val allocatableBytes = storageManager.getAllocatableBytes(uuid)
         Log.d(TAG, "allocatable: ${allocatableBytes.withUnit}")
-        if (bytes <= allocatableBytes) {
+        if (bytes in 0..allocatableBytes) {
             storageManager.allocateBytes(uuid, bytes)
         } else {
-            startActivity(Intent(StorageManager.ACTION_MANAGE_STORAGE))
-            //startActivity(Intent(StorageManager.ACTION_CLEAR_APP_CACHE))
+            whenNotAllocatable()
         }
     }
 }
