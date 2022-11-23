@@ -3,6 +3,7 @@ package jp.funmake.example.store
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -18,15 +19,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        findViewById<Button>(R.id.deleteButton).setOnClickListener {
+            scope.launch {
+                appSpecificInternalStorage.delete(this@MainActivity)
+                appSpecificExternalStorage.delete(this@MainActivity)
+            }
+        }
         scope.launch {
             Log.d(TAG, "AppSpecificInternalStorage")
             appSpecificInternalStorage.create(this@MainActivity)
             appSpecificInternalStorage.read(this@MainActivity)
-            appSpecificInternalStorage.delete(this@MainActivity)
             Log.d(TAG, "AppSpecificExternalStorage")
             appSpecificExternalStorage.create(this@MainActivity)
             appSpecificExternalStorage.read(this@MainActivity)
-            appSpecificExternalStorage.delete(this@MainActivity)
         }
     }
 
