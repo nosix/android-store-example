@@ -25,13 +25,7 @@ class MainActivity : AppCompatActivity() {
      * アロケートを要求するサイズ
      * 負値を指定すると強制的にアロケートできない扱いにする。
      */
-    private val requestAllocateSize = 1.MB
-
-    /**
-     * 容量不足でアロケートできない場合にCLEAR_APP_CACHEを行うか
-     * falseではMANAGE_STORAGEを行う
-     */
-    private val clearCacheWhenNotAllocatable = false
+    private val requestAllocateSize = (-1).MB
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,10 +33,9 @@ class MainActivity : AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             requestSpace(requestAllocateSize) {
-                if (clearCacheWhenNotAllocatable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    startActivity(Intent(StorageManager.ACTION_CLEAR_APP_CACHE))
-                } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     startActivity(Intent(StorageManager.ACTION_MANAGE_STORAGE))
+//                    startActivity(Intent(StorageManager.ACTION_CLEAR_APP_CACHE))
                 }
             }
         }
