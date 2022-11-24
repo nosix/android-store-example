@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private val appSpecificInternalStorage = AppSpecificInternalStorage()
     private val appSpecificExternalStorage = AppSpecificExternalStorage()
+    private val sharedMediaStorage = SharedMediaStorage()
 
     /**
      * アロケートを要求するサイズ
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity() {
             scope.launch {
                 appSpecificInternalStorage.delete(this@MainActivity)
                 appSpecificExternalStorage.delete(this@MainActivity)
+                sharedMediaStorage.delete(this@MainActivity)
             }
         }
         scope.launch {
@@ -53,6 +55,9 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "AppSpecificExternalStorage")
             appSpecificExternalStorage.create(this@MainActivity)
             appSpecificExternalStorage.read(this@MainActivity)
+            Log.d(TAG, "SharedMediaStorage")
+            sharedMediaStorage.create(this@MainActivity)
+            sharedMediaStorage.read(this@MainActivity)
         }
     }
 
