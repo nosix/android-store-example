@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
      * アロケートを要求するサイズ
      * 負値を指定すると強制的にアロケートできない扱いにする。
      */
-    private val requestAllocateSize = (-1).MB
+    private val requestAllocateSize = 1.MB
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
