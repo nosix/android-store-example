@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.provider.MediaStore
-import android.provider.MediaStore.Audio.Media
 import android.util.Log
 
 class SharedMediaStorage {
