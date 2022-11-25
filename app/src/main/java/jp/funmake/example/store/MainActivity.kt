@@ -1,5 +1,6 @@
 package jp.funmake.example.store
 
+import android.Manifest
 import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +15,7 @@ import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -50,6 +52,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val grantMessage = Channel<Map.Entry<String, Boolean>>()
+
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+            scope.launch {
+                granted.forEach {
+                    grantMessage.send(it)
+                }
+            }
+        }
+
+    private suspend fun hasPermissions(permissions: Array<String>): Boolean {
+        requestPermissions.launch(permissions)
+        var result = true
+        val waiting = permissions.toMutableSet()
+        while (waiting.isNotEmpty()) {
+            val granted = grantMessage.receive()
+            check(waiting.remove(granted.key))
+            result = result && granted.value
+        }
+        return result
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -77,14 +102,26 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "AppSpecificExternalStorage")
             appSpecificExternalStorage.create(this@MainActivity)
             appSpecificExternalStorage.read(this@MainActivity)
-            Log.d(TAG, "SharedMediaStorage")
-            sharedMediaStorage.create(this@MainActivity)
-            sharedMediaStorage.read(this@MainActivity)
 
             if (IS_SUBSCRIBER) {
                 getContent.launch("image/*")
                 getContent.launch("audio/*")
                 getContent.launch("application/*")
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        scope.launch {
+            val hasPermissions = if (Build.VERSION.SDK_INT >= 29) true else {
+                hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            }
+            if (hasPermissions) {
+                Log.d(TAG, "SharedMediaStorage")
+                sharedMediaStorage.create(this@MainActivity)
+                sharedMediaStorage.read(this@MainActivity)
             }
         }
     }
