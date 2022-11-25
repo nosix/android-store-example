@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.storage.StorageManager
+import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,15 +32,23 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
-    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        Log.d(TAG, "GetContent $uri")
-        if (uri != null) {
-            val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
-            FileInputStream(ifd).use {}
-            val ofd = contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor
-            FileOutputStream(ofd).use {}
+    private val getContent =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            Log.d(TAG, "GetContent $uri")
+            if (uri != null) {
+                contentResolver.query(uri, null, null, null, null)?.let { cursor ->
+                    val displayNameIndex =
+                        cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
+                    cursor.moveToFirst()
+                    Log.d(TAG, "${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}")
+                }
+                val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
+                FileInputStream(ifd).use {}
+                val ofd = contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor
+                FileOutputStream(ofd).use {}
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
