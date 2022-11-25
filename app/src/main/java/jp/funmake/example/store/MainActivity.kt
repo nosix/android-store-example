@@ -7,12 +7,15 @@ import android.os.Bundle
 import android.os.storage.StorageManager
 import android.util.Log
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,6 +30,16 @@ class MainActivity : AppCompatActivity() {
      * 負値を指定すると強制的にアロケートできない扱いにする。
      */
     private val requestAllocateSize = 1.MB
+
+    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        Log.d(TAG, "GetContent $uri")
+        if (uri != null) {
+            val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
+            FileInputStream(ifd).use {}
+            val ofd = contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor
+            FileOutputStream(ofd).use {}
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +71,12 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "SharedMediaStorage")
             sharedMediaStorage.create(this@MainActivity)
             sharedMediaStorage.read(this@MainActivity)
+
+            if (IS_SUBSCRIBER) {
+                getContent.launch("image/*")
+                getContent.launch("audio/*")
+                getContent.launch("application/*")
+            }
         }
     }
 
