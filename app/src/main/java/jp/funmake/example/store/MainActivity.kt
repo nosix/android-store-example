@@ -1,7 +1,7 @@
 package jp.funmake.example.store
 
-import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ class MainActivity : AppCompatActivity() {
 
     private val appSpecificInternalStorage = AppSpecificInternalStorage()
     private val appSpecificExternalStorage = AppSpecificExternalStorage()
-    private val sharedMediaStorage = SharedMediaStorage()
+    private val sharedMediaStorage = SharedMediaStorage(false)
 
     /**
      * アロケートを要求するサイズ
@@ -47,7 +48,10 @@ class MainActivity : AppCompatActivity() {
                         cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    Log.d(TAG, "GetContent ${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}")
+                    Log.d(
+                        TAG,
+                        "GetContent ${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}"
+                    )
                 }
                 val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
                 FileInputStream(ifd).use {}
@@ -62,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         completedMessage.receive()
     }
 
-    private val grantMessage = Channel<Map.Entry<String, Boolean>>()
+    private val grantMessage = Channel<Map.Entry<String, Boolean>>(capacity = 5)
 
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
@@ -72,12 +76,15 @@ class MainActivity : AppCompatActivity() {
         }
 
     private suspend fun hasPermissions(permissions: Array<String>): Boolean {
-        requestPermissions.launch(permissions)
+        val require = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }.toMutableSet()
+        if (require.isEmpty()) return true
+        requestPermissions.launch(require.toTypedArray())
         var result = true
-        val waiting = permissions.toMutableSet()
-        while (waiting.isNotEmpty()) {
+        while (require.isNotEmpty()) {
             val granted = grantMessage.receive()
-            check(waiting.remove(granted.key))
+            check(require.remove(granted.key))
             result = result && granted.value
         }
         return result
@@ -122,10 +129,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!alreadyExecuted) {
             scope.launch {
-                val hasPermissions = if (Build.VERSION.SDK_INT >= 29) true else {
-                    hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
-                }
-                if (hasPermissions) {
+                if (hasPermissions(sharedMediaStorage.permissions)) {
                     sharedMediaStorage.create(this@MainActivity)
                     sharedMediaStorage.read(this@MainActivity)
                     alreadyExecuted = true

@@ -1,12 +1,39 @@
 package jp.funmake.example.store
 
+import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 
-class SharedMediaStorage {
+/**
+ * @param onlySelfMedia 自アプリで作成したファイルのみ読み込む場合は true
+ */
+class SharedMediaStorage(onlySelfMedia: Boolean) {
+
+    val permissions = if (onlySelfMedia) {
+        when {
+            Build.VERSION.SDK_INT >= 29 -> emptyArray()
+            else -> arrayOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
+    } else {
+        when {
+            Build.VERSION.SDK_INT >= 33 -> arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_AUDIO
+            )
+            Build.VERSION.SDK_INT >= 29 -> arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            else -> arrayOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+        }
+    }
 
     private val imagesUri
         get() = if (Build.VERSION.SDK_INT >= 29) {
@@ -44,8 +71,9 @@ class SharedMediaStorage {
         }
 
     fun create(context: Context) {
+        val suffix = BuildConfig.APPLICATION_ID.split('.').last()
         val content = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "image")
+            put(MediaStore.Images.Media.DISPLAY_NAME, "image_$suffix")
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         }
         context.contentResolver.insert(imagesUri, content)?.let { fileUri ->
@@ -67,7 +95,12 @@ class SharedMediaStorage {
                 cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
             while (cursor.moveToNext()) {
-                Log.d(TAG, "SharedMedia read ${cursor.getString(displayNameIndex)} ${cursor.getString(dataIndex)}")
+                Log.d(
+                    TAG,
+                    "SharedMedia read ${cursor.getString(displayNameIndex)} ${
+                        cursor.getString(dataIndex)
+                    }"
+                )
             }
         }
     }
