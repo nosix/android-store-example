@@ -117,12 +117,12 @@ class MainActivity : AppCompatActivity() {
                 sharedMediaStorage.delete(this@MainActivity)
             }
         }
-        findViewById<Button>(R.id.readButton).setOnClickListener {
+        findViewById<Button>(R.id.readAndUpdateButton).setOnClickListener {
             scope.launch {
-                appSpecificInternalStorage.read(this@MainActivity)
-                appSpecificExternalStorage.read(this@MainActivity)
+                appSpecificInternalStorage.readAndUpdate(this@MainActivity)
+                appSpecificExternalStorage.readAndUpdate(this@MainActivity)
                 if (hasPermissions(sharedMediaStorage.readPermissions)) {
-                    sharedMediaStorage.read(this@MainActivity)
+                    sharedMediaStorage.readAndUpdate(this@MainActivity)
                 }
                 if (IS_SUBSCRIBER) {
                     getContent("image/*")

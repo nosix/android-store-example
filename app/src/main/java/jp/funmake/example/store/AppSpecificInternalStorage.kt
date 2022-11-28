@@ -31,7 +31,7 @@ class AppSpecificInternalStorage {
         File.createTempFile("file", ".tmp", musicCacheDir)
     }
 
-    fun read(context: Context) {
+    fun readAndUpdate(context: Context) {
         // filesの一覧を文字列で取得する
         context.fileList().forEach {
             Log.d(TAG, "AppInternal read fileList $it")
@@ -55,6 +55,7 @@ class AppSpecificInternalStorage {
             // files/Music/fileを読み込む
             val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
             FileInputStream(File(musicDir, "file")).use {}
+            FileOutputStream(File(musicDir, "file")).use {}
         } catch (e : FileNotFoundException) {
             Log.d(TAG, "AppInternal read file not found")
         }

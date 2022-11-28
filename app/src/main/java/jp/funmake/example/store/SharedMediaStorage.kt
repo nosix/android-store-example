@@ -1,6 +1,7 @@
 package jp.funmake.example.store
 
 import android.Manifest
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
@@ -80,8 +81,9 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
         }
     }
 
-    fun read(context: Context) {
-        context.contentResolver.query(
+    fun readAndUpdate(context: Context) {
+        val resolver = context.contentResolver
+        resolver.query(
             imagesUri,
             null,
             null,
@@ -89,9 +91,16 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
             null
         )?.use { cursor ->
             Log.d(TAG, "SharedMedia read ${cursor.columnNames.toList()}")
+            val idIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
             val displayNameIndex =
                 cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+            val packageIndex = if (Build.VERSION.SDK_INT >= 29) {
+                cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.OWNER_PACKAGE_NAME)
+            } else {
+                0
+            }
+
             while (cursor.moveToNext()) {
                 Log.d(
                     TAG,
@@ -99,6 +108,14 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
                         cursor.getString(dataIndex)
                     }"
                 )
+                val id = cursor.getLong(idIndex)
+                val uri = ContentUris.withAppendedId(imagesUri, id)
+                // TODO API 29 以上で読み書きする方法
+                if (packageIndex == 0 || cursor.getString(packageIndex) == BuildConfig.APPLICATION_ID) {
+                    resolver.openInputStream(uri).use {}
+                    resolver.openOutputStream(uri).use {}
+                    Log.d(TAG, "SharedMedia read opened $uri")
+                }
             }
         }
     }

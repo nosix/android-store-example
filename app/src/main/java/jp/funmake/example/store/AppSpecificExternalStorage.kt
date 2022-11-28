@@ -41,7 +41,7 @@ class AppSpecificExternalStorage {
         }
     }
 
-    fun read(context: Context) {
+    fun readAndUpdate(context: Context) {
         runIfMounted {
             // 全てのfilesDirを取得する
             ContextCompat.getExternalFilesDirs(context, null).forEach {
@@ -65,6 +65,7 @@ class AppSpecificExternalStorage {
             try {
                 // files/Pictures/fileを読み込む
                 FileInputStream(File(pictureDir, "file")).use {}
+                FileOutputStream(File(pictureDir, "file")).use {}
             } catch (e : FileNotFoundException) {
                 Log.d(TAG, "AppExternal read file not found")
             }
