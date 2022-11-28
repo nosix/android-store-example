@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
 
     private var alreadyExecuted = false
 
+    private val completedMessage = Channel<Unit>()
+
     private val getContent =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             Log.d(TAG, "GetContent $uri")
@@ -52,16 +54,20 @@ class MainActivity : AppCompatActivity() {
                 val ofd = contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor
                 FileOutputStream(ofd).use {}
             }
+            completedMessage.trySend(Unit)
         }
+
+    private suspend fun getContent(mimeType: String) {
+        getContent.launch(mimeType)
+        completedMessage.receive()
+    }
 
     private val grantMessage = Channel<Map.Entry<String, Boolean>>()
 
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            scope.launch {
-                granted.forEach {
-                    grantMessage.send(it)
-                }
+            granted.forEach {
+                grantMessage.trySend(it)
             }
         }
 
@@ -104,9 +110,9 @@ class MainActivity : AppCompatActivity() {
             appSpecificExternalStorage.read(this@MainActivity)
 
             if (IS_SUBSCRIBER) {
-                getContent.launch("image/*")
-                getContent.launch("audio/*")
-                getContent.launch("application/*")
+                getContent("image/*")
+                getContent("audio/*")
+                getContent("application/*")
             }
         }
     }
