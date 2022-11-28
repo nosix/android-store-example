@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private val completedMessage = Channel<Unit>()
 
     private val getContent =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        registerForActivityResult(GetContent()) { uri ->
             Log.d(TAG, "GetContent $uri")
             if (uri != null) {
                 contentResolver.query(uri, null, null, null, null)?.let { cursor ->

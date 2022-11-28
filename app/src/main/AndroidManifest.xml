@@ -30,7 +30,7 @@
             android:enabled="@bool/enabled_file_select"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.GET_CONTENT" />
+                <action android:name="jp.funmake.example.action.GET_CONTENT" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.OPENABLE" />
