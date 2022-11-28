@@ -12,27 +12,25 @@ import android.util.Log
  */
 class SharedMediaStorage(onlySelfMedia: Boolean) {
 
-    val permissions = if (onlySelfMedia) {
-        when {
-            Build.VERSION.SDK_INT >= 29 -> emptyArray()
-            else -> arrayOf(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        }
+    val readPermissions = if (onlySelfMedia) {
+        emptyArray()
     } else {
         when {
             Build.VERSION.SDK_INT >= 33 -> arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_AUDIO
             )
-            Build.VERSION.SDK_INT >= 29 -> arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
             else -> arrayOf(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE
             )
         }
+    }
+
+    val writePermissions = when {
+        Build.VERSION.SDK_INT >= 29 -> emptyArray()
+        else -> arrayOf(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
     }
 
     private val imagesUri

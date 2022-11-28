@@ -35,8 +35,6 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
-    private var alreadyExecuted = false
-
     private val completedMessage = Channel<Unit>()
 
     private val getContent =
@@ -103,6 +101,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<Button>(R.id.createButton).setOnClickListener {
+            scope.launch {
+                appSpecificInternalStorage.create(this@MainActivity)
+                appSpecificExternalStorage.create(this@MainActivity)
+                if (hasPermissions(sharedMediaStorage.writePermissions)) {
+                    sharedMediaStorage.create(this@MainActivity)
+                }
+            }
+        }
         findViewById<Button>(R.id.deleteButton).setOnClickListener {
             scope.launch {
                 appSpecificInternalStorage.delete(this@MainActivity)
@@ -110,29 +117,17 @@ class MainActivity : AppCompatActivity() {
                 sharedMediaStorage.delete(this@MainActivity)
             }
         }
-        scope.launch {
-            appSpecificInternalStorage.create(this@MainActivity)
-            appSpecificInternalStorage.read(this@MainActivity)
-            appSpecificExternalStorage.create(this@MainActivity)
-            appSpecificExternalStorage.read(this@MainActivity)
-
-            if (IS_SUBSCRIBER) {
-                getContent("image/*")
-                getContent("audio/*")
-                getContent("application/*")
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (!alreadyExecuted) {
+        findViewById<Button>(R.id.readButton).setOnClickListener {
             scope.launch {
-                if (hasPermissions(sharedMediaStorage.permissions)) {
-                    sharedMediaStorage.create(this@MainActivity)
+                appSpecificInternalStorage.read(this@MainActivity)
+                appSpecificExternalStorage.read(this@MainActivity)
+                if (hasPermissions(sharedMediaStorage.readPermissions)) {
                     sharedMediaStorage.read(this@MainActivity)
-                    alreadyExecuted = true
+                }
+                if (IS_SUBSCRIBER) {
+                    getContent("image/*")
+                    getContent("audio/*")
+                    getContent("application/*")
                 }
             }
         }

@@ -5,6 +5,7 @@ import android.os.Environment
 import android.util.Log
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
 class AppSpecificInternalStorage {
@@ -43,16 +44,19 @@ class AppSpecificInternalStorage {
         context.filesDir.walk().forEach {
             Log.d(TAG, "AppInternal read walk $it")
         }
-        // files/fileを読み込む
-        context.openFileInput("file").use {}
-        // files/Music/fileを読み込む
-        val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
-        FileInputStream(File(musicDir, "file")).use {}
-
         // cache/Musicの一覧をFileで取得する
         val musicCacheDir = File(context.cacheDir, Environment.DIRECTORY_MUSIC)
         musicCacheDir.listFiles()?.forEach {
             Log.d(TAG, "AppInternal read cache listFiles $it")
+        }
+        try {
+            // files/fileを読み込む
+            context.openFileInput("file").use {}
+            // files/Music/fileを読み込む
+            val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
+            FileInputStream(File(musicDir, "file")).use {}
+        } catch (e : FileNotFoundException) {
+            Log.d(TAG, "AppInternal read file not found")
         }
     }
 

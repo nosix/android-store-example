@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
 class AppSpecificExternalStorage {
@@ -51,17 +52,21 @@ class AppSpecificExternalStorage {
                 Log.d(TAG, "AppExternal read externalCacheDirs $it")
             }
 
-            // filesの一覧をFileで取得する
+            // files/Picturesの一覧をFileで取得する
             val pictureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
             pictureDir?.listFiles()?.forEach {
                 Log.d(TAG, "AppExternal read listFiles $it")
             }
-            // files/Pictures/fileを読み込む
-            FileInputStream(File(pictureDir, "file")).use {}
-
+            // cache/Picturesの一覧をFileで取得する
             val pictureCacheDir = File(context.externalCacheDir, Environment.DIRECTORY_PICTURES)
             pictureCacheDir.listFiles()?.forEach {
                 Log.d(TAG, "AppExternal read cache listFiles $it")
+            }
+            try {
+                // files/Pictures/fileを読み込む
+                FileInputStream(File(pictureDir, "file")).use {}
+            } catch (e : FileNotFoundException) {
+                Log.d(TAG, "AppExternal read file not found")
             }
         }
     }
