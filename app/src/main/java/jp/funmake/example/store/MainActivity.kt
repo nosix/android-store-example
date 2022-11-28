@@ -34,6 +34,8 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
+    private var alreadyExecuted = false
+
     private val getContent =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             Log.d(TAG, "GetContent $uri")
@@ -43,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                         cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    Log.d(TAG, "${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}")
+                    Log.d(TAG, "GetContent ${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}")
                 }
                 val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
                 FileInputStream(ifd).use {}
@@ -96,10 +98,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         scope.launch {
-            Log.d(TAG, "AppSpecificInternalStorage")
             appSpecificInternalStorage.create(this@MainActivity)
             appSpecificInternalStorage.read(this@MainActivity)
-            Log.d(TAG, "AppSpecificExternalStorage")
             appSpecificExternalStorage.create(this@MainActivity)
             appSpecificExternalStorage.read(this@MainActivity)
 
@@ -114,14 +114,16 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        scope.launch {
-            val hasPermissions = if (Build.VERSION.SDK_INT >= 29) true else {
-                hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
-            }
-            if (hasPermissions) {
-                Log.d(TAG, "SharedMediaStorage")
-                sharedMediaStorage.create(this@MainActivity)
-                sharedMediaStorage.read(this@MainActivity)
+        if (!alreadyExecuted) {
+            scope.launch {
+                val hasPermissions = if (Build.VERSION.SDK_INT >= 29) true else {
+                    hasPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                }
+                if (hasPermissions) {
+                    sharedMediaStorage.create(this@MainActivity)
+                    sharedMediaStorage.read(this@MainActivity)
+                    alreadyExecuted = true
+                }
             }
         }
     }

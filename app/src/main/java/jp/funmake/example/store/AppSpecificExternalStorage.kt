@@ -24,7 +24,7 @@ class AppSpecificExternalStorage {
         runIfMounted {
             // files/Picturesディレクトリを作成する
             val pictureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            Log.d(TAG, "create $pictureDir")
+            Log.d(TAG, "AppExternal create $pictureDir")
             // files/fileファイルを作成する
             val filesDir = context.getExternalFilesDir(null)
             FileOutputStream(File(filesDir, "file")).use {}
@@ -34,7 +34,7 @@ class AppSpecificExternalStorage {
             // cache/Picturesディレクトリを作成する
             val pictureCacheDir = File(context.externalCacheDir, Environment.DIRECTORY_PICTURES)
             pictureCacheDir.mkdirs()
-            Log.d(TAG, "create $pictureCacheDir")
+            Log.d(TAG, "AppExternal create $pictureCacheDir")
             // cache/Pictures/file*.tmpファイルを作成する
             File.createTempFile("file", ".tmp", pictureCacheDir)
         }
@@ -44,24 +44,24 @@ class AppSpecificExternalStorage {
         runIfMounted {
             // 全てのfilesDirを取得する
             ContextCompat.getExternalFilesDirs(context, null).forEach {
-                Log.d(TAG, "externalFilesDirs $it")
+                Log.d(TAG, "AppExternal read externalFilesDirs $it")
             }
             // 全てのcacheDirを取得する
             ContextCompat.getExternalCacheDirs(context).forEach {
-                Log.d(TAG, "externalCacheDirs $it")
+                Log.d(TAG, "AppExternal read externalCacheDirs $it")
             }
 
             // filesの一覧をFileで取得する
             val pictureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
             pictureDir?.listFiles()?.forEach {
-                Log.d(TAG, "fileList $it")
+                Log.d(TAG, "AppExternal read listFiles $it")
             }
             // files/Pictures/fileを読み込む
             FileInputStream(File(pictureDir, "file")).use {}
 
             val pictureCacheDir = File(context.externalCacheDir, Environment.DIRECTORY_PICTURES)
             pictureCacheDir.listFiles()?.forEach {
-                Log.d(TAG, "cacheFileList $it")
+                Log.d(TAG, "AppExternal read cache listFiles $it")
             }
         }
     }
@@ -77,6 +77,7 @@ class AppSpecificExternalStorage {
             // cache/Picturesディレクトリを削除する
             val pictureCacheDir = File(context.externalCacheDir, Environment.DIRECTORY_PICTURES)
             pictureCacheDir.deleteRecursively()
+            Log.d(TAG, "AppExternal delete completed")
         }
     }
 }

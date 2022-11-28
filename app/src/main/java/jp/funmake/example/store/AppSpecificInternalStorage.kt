@@ -12,11 +12,11 @@ class AppSpecificInternalStorage {
     fun create(context: Context) {
         // app_Picturesディレクトリを作成する
         val pictureDir = context.getDir(Environment.DIRECTORY_PICTURES, Context.MODE_PRIVATE)
-        Log.d(TAG, "create $pictureDir")
+        Log.d(TAG, "AppInternal create $pictureDir")
         // files/Musicディレクトリを作成する
         val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
         musicDir.mkdirs()
-        Log.d(TAG, "create $musicDir")
+        Log.d(TAG, "AppInternal create $musicDir")
         // files/fileファイルを作成する
         context.openFileOutput("file", Context.MODE_PRIVATE).use {}
         // files/Music/fileファイルを作成する
@@ -25,7 +25,7 @@ class AppSpecificInternalStorage {
         // cache/Musicディレクトリを作成する
         val musicCacheDir = File(context.cacheDir, Environment.DIRECTORY_MUSIC)
         musicCacheDir.mkdirs()
-        Log.d(TAG, "create $musicCacheDir")
+        Log.d(TAG, "AppInternal create $musicCacheDir")
         // cache/Music/file*.tmpファイルを作成する
         File.createTempFile("file", ".tmp", musicCacheDir)
     }
@@ -33,15 +33,15 @@ class AppSpecificInternalStorage {
     fun read(context: Context) {
         // filesの一覧を文字列で取得する
         context.fileList().forEach {
-            Log.d(TAG, "fileList $it")
+            Log.d(TAG, "AppInternal read fileList $it")
         }
         // filesの一覧をFileで取得する
         context.filesDir.listFiles()?.forEach {
-            Log.d(TAG, "fileList $it")
+            Log.d(TAG, "AppInternal read listFiles $it")
         }
         // filesをルートとするTreeを取得する
         context.filesDir.walk().forEach {
-            Log.d(TAG, "walk $it")
+            Log.d(TAG, "AppInternal read walk $it")
         }
         // files/fileを読み込む
         context.openFileInput("file").use {}
@@ -52,7 +52,7 @@ class AppSpecificInternalStorage {
         // cache/Musicの一覧をFileで取得する
         val musicCacheDir = File(context.cacheDir, Environment.DIRECTORY_MUSIC)
         musicCacheDir.listFiles()?.forEach {
-            Log.d(TAG, "cacheFileList $it")
+            Log.d(TAG, "AppInternal read cache listFiles $it")
         }
     }
 
@@ -68,5 +68,6 @@ class AppSpecificInternalStorage {
         // cache/Musicディレクトリを削除する
         val musicCacheDir = File(context.cacheDir, Environment.DIRECTORY_MUSIC)
         musicCacheDir.deleteRecursively()
+        Log.d(TAG, "AppInternal delete completed")
     }
 }

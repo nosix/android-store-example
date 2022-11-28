@@ -50,7 +50,7 @@ class SharedMediaStorage {
         }
         context.contentResolver.insert(imagesUri, content)?.let { fileUri ->
             context.contentResolver.openOutputStream(fileUri).use {}
-            Log.d(TAG, "create $fileUri")
+            Log.d(TAG, "SharedMedia create $fileUri")
         }
     }
 
@@ -62,17 +62,18 @@ class SharedMediaStorage {
             null,
             null
         )?.use { cursor ->
-            Log.d(TAG, "read ${cursor.columnNames.toList()}")
+            Log.d(TAG, "SharedMedia read ${cursor.columnNames.toList()}")
             val displayNameIndex =
                 cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
             while (cursor.moveToNext()) {
-                Log.d(TAG, "${cursor.getString(displayNameIndex)} : ${cursor.getString(dataIndex)}")
+                Log.d(TAG, "SharedMedia read ${cursor.getString(displayNameIndex)} ${cursor.getString(dataIndex)}")
             }
         }
     }
 
     fun delete(context: Context) {
         context.contentResolver.delete(imagesUri, null, null)
+        Log.d(TAG, "SharedMedia delete completed")
     }
 }
