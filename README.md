@@ -1,11 +1,13 @@
 # 実行手順
 
 1. Build Variants > pubDebug 選択後、Run app
-2. Build Variants > subDebug 選択後、Run app
-3. ファイル選択画面で store-example を選択 × 3回
-4. logcat 確認
-5. DELETE ボタン押下
+2. CREATE ボタン押下
+3. Build Variants > subDebug 選択後、Run app
+4. CREATE ボタン押下
+5. READ & UPDATE ボタン押下
 6. logcat 確認
+7. DELETE ボタン押下
+8. logcat 確認
 
 # 確認済み
 

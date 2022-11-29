@@ -63,9 +63,14 @@ class AppSpecificExternalStorage {
                 Log.d(TAG, "AppExternal read cache listFiles $it")
             }
             try {
+                // files/Pictures/fileに書き込む
+                FileOutputStream(File(pictureDir, "file")).use {
+                    it.write(2)
+                }
                 // files/Pictures/fileを読み込む
-                FileInputStream(File(pictureDir, "file")).use {}
-                FileOutputStream(File(pictureDir, "file")).use {}
+                FileInputStream(File(pictureDir, "file")).use {
+                    Log.d(TAG, "AppExternal read stream ${it.read()}")
+                }
             } catch (e : FileNotFoundException) {
                 Log.d(TAG, "AppExternal read file not found")
             }

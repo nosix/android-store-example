@@ -50,13 +50,18 @@ class AppSpecificInternalStorage {
             Log.d(TAG, "AppInternal read cache listFiles $it")
         }
         try {
+            val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
+            // files/Music/fileに書き込む
+            FileOutputStream(File(musicDir, "file")).use {
+                it.write(1)
+            }
+            // files/Music/fileを読み込む
+            FileInputStream(File(musicDir, "file")).use {
+                Log.d(TAG, "AppInternal read stream ${it.read()}")
+            }
             // files/fileを読み込む
             context.openFileInput("file").use {}
-            // files/Music/fileを読み込む
-            val musicDir = File(context.filesDir, Environment.DIRECTORY_MUSIC)
-            FileInputStream(File(musicDir, "file")).use {}
-            FileOutputStream(File(musicDir, "file")).use {}
-        } catch (e : FileNotFoundException) {
+        } catch (e: FileNotFoundException) {
             Log.d(TAG, "AppInternal read file not found")
         }
     }

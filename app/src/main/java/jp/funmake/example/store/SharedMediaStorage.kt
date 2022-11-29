@@ -1,9 +1,12 @@
 package jp.funmake.example.store
 
 import android.Manifest
+import android.app.Activity
+import android.app.RecoverableSecurityException
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -81,7 +84,7 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
         }
     }
 
-    fun readAndUpdate(context: Context) {
+    suspend fun readAndUpdate(context: Context, startIntentSender: StartIntentSenderLauncher) {
         val resolver = context.contentResolver
         resolver.query(
             imagesUri,
@@ -100,21 +103,25 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
             } else {
                 0
             }
-
+            val writeContext = WriteContext(context, startIntentSender)
             while (cursor.moveToNext()) {
+                val displayName = cursor.getString(displayNameIndex)
+                val data = cursor.getString(dataIndex)
                 Log.d(
                     TAG,
-                    "SharedMedia read ${cursor.getString(displayNameIndex)} ${
-                        cursor.getString(dataIndex)
-                    }"
+                    "SharedMedia read $displayName $data"
                 )
                 val id = cursor.getLong(idIndex)
                 val uri = ContentUris.withAppendedId(imagesUri, id)
-                // TODO API 29 以上で読み書きする方法
-                if (packageIndex == 0 || cursor.getString(packageIndex) == BuildConfig.APPLICATION_ID) {
-                    resolver.openInputStream(uri).use {}
-                    resolver.openOutputStream(uri).use {}
-                    Log.d(TAG, "SharedMedia read opened $uri")
+                val hasPermission = packageIndex == 0
+                        || cursor.getString(packageIndex) == BuildConfig.APPLICATION_ID
+                writeContext.write(uri, hasPermission) {
+                    resolver.openOutputStream(uri)?.use { out ->
+                        out.write(3)
+                    }
+                }
+                resolver.openInputStream(uri)?.use {
+                    Log.d(TAG, "SharedMedia read stream ${it.read()}")
                 }
             }
         }
@@ -123,5 +130,39 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
     fun delete(context: Context) {
         context.contentResolver.delete(imagesUri, null, null)
         Log.d(TAG, "SharedMedia delete completed")
+    }
+
+    private class WriteContext(
+        private val context: Context,
+        private val startIntentSender: StartIntentSenderLauncher
+    ) {
+        suspend fun write(uri: Uri, hasPermission: Boolean, writeAction: (Uri) -> Unit) {
+            if (hasPermission) {
+                writeAction(uri)
+                return
+            }
+            val resolver = context.contentResolver
+            when {
+                Build.VERSION.SDK_INT >= 30 -> {
+                    val pendingIntent = MediaStore.createWriteRequest(
+                        resolver,
+                        listOf(uri)
+                    )
+                    startIntentSender.launch(pendingIntent.intentSender) { result ->
+                        if (result.resultCode == Activity.RESULT_OK) writeAction(uri)
+                    }
+                }
+                Build.VERSION.SDK_INT >= 29 -> {
+                    try {
+                        writeAction(uri)
+                    } catch (e: RecoverableSecurityException) {
+                        startIntentSender.launch(e.userAction.actionIntent.intentSender) { result ->
+                            if (result.resultCode == Activity.RESULT_OK) writeAction(uri)
+                        }
+                    }
+                }
+                else -> writeAction(uri)
+            }
+        }
     }
 }

@@ -88,6 +88,8 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    private val startIntentSender = StartIntentSenderLauncher(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -122,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.readAndUpdate(this@MainActivity)
                 appSpecificExternalStorage.readAndUpdate(this@MainActivity)
                 if (hasPermissions(sharedMediaStorage.readPermissions)) {
-                    sharedMediaStorage.readAndUpdate(this@MainActivity)
+                    sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSender)
                 }
                 if (IS_SUBSCRIBER) {
                     getContent("image/*")
