@@ -13,10 +13,11 @@ import jp.funmake.example.store.launcher.StartActivityLauncher
 class DocumentStorage {
 
     suspend fun create(startActivity: StartActivityLauncher) {
+        val suffix = BuildConfig.APPLICATION_ID.split('.').last()
         Intent(Intent.ACTION_CREATE_DOCUMENT).run {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/plain"
-            putExtra(Intent.EXTRA_TITLE, "file")
+            putExtra(Intent.EXTRA_TITLE, "file_$suffix")
             startActivity(this) { result ->
                 Log.d(TAG, "Document create ${result.uri}")
             }
