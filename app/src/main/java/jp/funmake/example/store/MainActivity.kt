@@ -10,6 +10,10 @@ import android.util.Log
 import android.widget.Button
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import jp.funmake.example.store.launcher.GetContentLauncher
+import jp.funmake.example.store.launcher.RequestPermissionsLauncher
+import jp.funmake.example.store.launcher.StartActivityLauncher
+import jp.funmake.example.store.launcher.StartIntentSenderLauncher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -32,10 +36,10 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
-    private val requestPermissionsLauncher = RequestPermissionsLauncher(this)
-    private val startActivityLauncher = StartActivityLauncher(this)
-    private val startIntentSenderLauncher = StartIntentSenderLauncher(this)
-    private val getContentLauncher = GetContentLauncher(this)
+    private val requestPermissions = RequestPermissionsLauncher(this)
+    private val startActivity = StartActivityLauncher(this)
+    private val startIntentSender = StartIntentSenderLauncher(this)
+    private val getContent = GetContentLauncher(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                 if (hasPermissions(sharedMediaStorage.writePermissions)) {
                     sharedMediaStorage.create(this@MainActivity)
                 }
-                documentStorage.create(startActivityLauncher)
+                documentStorage.create(startActivity)
             }
         }
         findViewById<Button>(R.id.deleteButton).setOnClickListener {
@@ -65,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.delete(this@MainActivity)
                 appSpecificExternalStorage.delete(this@MainActivity)
                 sharedMediaStorage.delete(this@MainActivity)
-                documentStorage.delete(this@MainActivity, startActivityLauncher)
+                documentStorage.delete(this@MainActivity, startActivity)
             }
         }
         findViewById<Button>(R.id.readAndUpdateButton).setOnClickListener {
@@ -73,9 +77,9 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.readAndUpdate(this@MainActivity)
                 appSpecificExternalStorage.readAndUpdate(this@MainActivity)
                 if (hasPermissions(sharedMediaStorage.readPermissions)) {
-                    sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSenderLauncher)
+                    sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSender)
                 }
-                documentStorage.readAndUpdate(this@MainActivity, startActivityLauncher)
+                documentStorage.readAndUpdate(this@MainActivity, startActivity)
                 if (IS_SUBSCRIBER) {
                     getContent("image/*")
                     getContent("audio/*")
@@ -91,11 +95,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun hasPermissions(permissions: Array<String>): Boolean {
-        return requestPermissionsLauncher.launch(this, permissions)
+        return requestPermissions(this, permissions)
     }
 
     private suspend fun getContent(mimeType: String) {
-        getContentLauncher.launch(mimeType) { uri ->
+        getContent(mimeType) { uri ->
             Log.d(TAG, "GetContent $uri")
             if (uri != null) {
                 contentResolver.query(uri, null, null, null, null)?.use { cursor ->

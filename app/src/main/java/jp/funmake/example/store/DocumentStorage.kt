@@ -8,6 +8,7 @@ import android.provider.DocumentsContract
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.documentfile.provider.DocumentFile
+import jp.funmake.example.store.launcher.StartActivityLauncher
 
 class DocumentStorage {
 
@@ -16,7 +17,7 @@ class DocumentStorage {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/plain"
             putExtra(Intent.EXTRA_TITLE, "file")
-            startActivity.launch(this) { result ->
+            startActivity(this) { result ->
                 Log.d(TAG, "Document create ${result.uri}")
             }
         }
@@ -27,7 +28,7 @@ class DocumentStorage {
         Intent(Intent.ACTION_OPEN_DOCUMENT).run {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/plain"
-            startActivity.launch(this) { result ->
+            startActivity(this) { result ->
                 Log.d(TAG, "Document read ${result.uri}")
                 result.uri?.let { uri ->
                     resolver.openOutputStream(uri)?.use {
@@ -40,7 +41,7 @@ class DocumentStorage {
             }
         }
         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).run {
-            startActivity.launch(this) { result ->
+            startActivity(this) { result ->
                 Log.d(TAG, "Document read ${result.uri}")
                 result.uri?.let { uri ->
                     DocumentFile.fromTreeUri(context, uri)?.let { dir ->
@@ -61,7 +62,7 @@ class DocumentStorage {
 
     suspend fun delete(context: Context, startActivity: StartActivityLauncher) {
         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).run {
-            startActivity.launch(this) { result ->
+            startActivity(this) { result ->
                 result.uri?.let { uri ->
                     DocumentFile.fromTreeUri(context, uri)?.let { dir ->
                         for (file in dir.listFiles()) {

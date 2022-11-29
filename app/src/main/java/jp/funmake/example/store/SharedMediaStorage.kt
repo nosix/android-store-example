@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import jp.funmake.example.store.launcher.StartIntentSenderLauncher
 
 /**
  * @param onlySelfMedia 自アプリで作成したファイルのみ読み込む場合は true
@@ -148,7 +149,7 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
                         resolver,
                         listOf(uri)
                     )
-                    startIntentSender.launch(pendingIntent.intentSender) { result ->
+                    startIntentSender(pendingIntent.intentSender) { result ->
                         if (result.resultCode == Activity.RESULT_OK) writeAction(uri)
                     }
                 }
@@ -156,7 +157,7 @@ class SharedMediaStorage(onlySelfMedia: Boolean) {
                     try {
                         writeAction(uri)
                     } catch (e: RecoverableSecurityException) {
-                        startIntentSender.launch(e.userAction.actionIntent.intentSender) { result ->
+                        startIntentSender(e.userAction.actionIntent.intentSender) { result ->
                             if (result.resultCode == Activity.RESULT_OK) writeAction(uri)
                         }
                     }
