@@ -36,35 +36,6 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
-    private val completedMessage = Channel<Unit>()
-
-    private val getContent =
-        registerForActivityResult(GetContent()) { uri ->
-            Log.d(TAG, "GetContent $uri")
-            if (uri != null) {
-                contentResolver.query(uri, null, null, null, null)?.let { cursor ->
-                    val displayNameIndex =
-                        cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                    val sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
-                    cursor.moveToFirst()
-                    Log.d(
-                        TAG,
-                        "GetContent ${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}"
-                    )
-                }
-                val ifd = contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
-                FileInputStream(ifd).use {}
-                val ofd = contentResolver.openFileDescriptor(uri, "w")?.fileDescriptor
-                FileOutputStream(ofd).use {}
-            }
-            completedMessage.trySend(Unit)
-        }
-
-    private suspend fun getContent(mimeType: String) {
-        getContent.launch(mimeType)
-        completedMessage.receive()
-    }
-
     private val grantMessage = Channel<Map.Entry<String, Boolean>>(capacity = 5)
 
     private val requestPermissions =
@@ -89,8 +60,9 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private val startActivity = StartActivityLauncher(this)
-    private val startIntentSender = StartIntentSenderLauncher(this)
+    private val startActivityLauncher = StartActivityLauncher(this)
+    private val startIntentSenderLauncher = StartIntentSenderLauncher(this)
+    private val getContentLauncher = GetContentLauncher(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                 if (hasPermissions(sharedMediaStorage.writePermissions)) {
                     sharedMediaStorage.create(this@MainActivity)
                 }
-                documentStorage.create(startActivity)
+                documentStorage.create(startActivityLauncher)
             }
         }
         findViewById<Button>(R.id.deleteButton).setOnClickListener {
@@ -120,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.delete(this@MainActivity)
                 appSpecificExternalStorage.delete(this@MainActivity)
                 sharedMediaStorage.delete(this@MainActivity)
-                documentStorage.delete(this@MainActivity, startActivity)
+                documentStorage.delete(this@MainActivity, startActivityLauncher)
             }
         }
         findViewById<Button>(R.id.readAndUpdateButton).setOnClickListener {
@@ -128,9 +100,9 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.readAndUpdate(this@MainActivity)
                 appSpecificExternalStorage.readAndUpdate(this@MainActivity)
                 if (hasPermissions(sharedMediaStorage.readPermissions)) {
-                    sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSender)
+                    sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSenderLauncher)
                 }
-                documentStorage.readAndUpdate(this@MainActivity, startActivity)
+                documentStorage.readAndUpdate(this@MainActivity, startActivityLauncher)
                 if (IS_SUBSCRIBER) {
                     getContent("image/*")
                     getContent("audio/*")
@@ -143,6 +115,31 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
+    }
+
+    private suspend fun getContent(mimeType: String) {
+        getContentLauncher.launch(mimeType) { uri ->
+            Log.d(TAG, "GetContent $uri")
+            if (uri != null) {
+                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val displayNameIndex =
+                        cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
+                    cursor.moveToFirst()
+                    Log.d(
+                        TAG,
+                        "GetContent ${cursor.getString(displayNameIndex)} ${cursor.getLong(sizeIndex)}"
+                    )
+                }
+                contentResolver.openFileDescriptor(uri, "w")?.use { ofd ->
+                    FileOutputStream(ofd.fileDescriptor).write(6)
+                }
+                contentResolver.openFileDescriptor(uri, "r")?.use { ifd ->
+                    val data = FileInputStream(ifd.fileDescriptor).read()
+                    Log.d(TAG, "GetContent read stream $data")
+                }
+            }
+        }
     }
 
     @RequiresApi(26)
