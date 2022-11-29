@@ -1,7 +1,6 @@
 package jp.funmake.example.store
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -9,14 +8,11 @@ import android.os.storage.StorageManager
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Button
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -36,30 +32,7 @@ class MainActivity : AppCompatActivity() {
      */
     private val requestAllocateSize = 1.MB
 
-    private val grantMessage = Channel<Map.Entry<String, Boolean>>(capacity = 5)
-
-    private val requestPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            granted.forEach {
-                grantMessage.trySend(it)
-            }
-        }
-
-    private suspend fun hasPermissions(permissions: Array<String>): Boolean {
-        val require = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }.toMutableSet()
-        if (require.isEmpty()) return true
-        requestPermissions.launch(require.toTypedArray())
-        var result = true
-        while (require.isNotEmpty()) {
-            val granted = grantMessage.receive()
-            check(require.remove(granted.key))
-            result = result && granted.value
-        }
-        return result
-    }
-
+    private val requestPermissionsLauncher = RequestPermissionsLauncher(this)
     private val startActivityLauncher = StartActivityLauncher(this)
     private val startIntentSenderLauncher = StartIntentSenderLauncher(this)
     private val getContentLauncher = GetContentLauncher(this)
@@ -115,6 +88,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
+    }
+
+    private suspend fun hasPermissions(permissions: Array<String>): Boolean {
+        return requestPermissionsLauncher.launch(this, permissions)
     }
 
     private suspend fun getContent(mimeType: String) {
