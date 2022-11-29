@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private val appSpecificInternalStorage = AppSpecificInternalStorage()
     private val appSpecificExternalStorage = AppSpecificExternalStorage()
     private val sharedMediaStorage = SharedMediaStorage(false)
+    private val documentStorage = DocumentStorage()
 
     /**
      * アロケートを要求するサイズ
@@ -88,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    private val startActivity = StartActivityLauncher(this)
     private val startIntentSender = StartIntentSenderLauncher(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 if (hasPermissions(sharedMediaStorage.writePermissions)) {
                     sharedMediaStorage.create(this@MainActivity)
                 }
+                documentStorage.create(startActivity)
             }
         }
         findViewById<Button>(R.id.deleteButton).setOnClickListener {
@@ -117,6 +120,7 @@ class MainActivity : AppCompatActivity() {
                 appSpecificInternalStorage.delete(this@MainActivity)
                 appSpecificExternalStorage.delete(this@MainActivity)
                 sharedMediaStorage.delete(this@MainActivity)
+                documentStorage.delete(this@MainActivity, startActivity)
             }
         }
         findViewById<Button>(R.id.readAndUpdateButton).setOnClickListener {
@@ -126,6 +130,7 @@ class MainActivity : AppCompatActivity() {
                 if (hasPermissions(sharedMediaStorage.readPermissions)) {
                     sharedMediaStorage.readAndUpdate(this@MainActivity, startIntentSender)
                 }
+                documentStorage.readAndUpdate(this@MainActivity, startActivity)
                 if (IS_SUBSCRIBER) {
                     getContent("image/*")
                     getContent("audio/*")
